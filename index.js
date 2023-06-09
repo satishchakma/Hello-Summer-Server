@@ -3,6 +3,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 require("dotenv").config();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
 // middleswares
 app.use(cors());
@@ -33,6 +34,36 @@ async function run() {
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
+
+    const userCollection = client.db("helloSummerDB").collection("users");
+
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+
+      res.send({ token });
+    });
+
+    app.post("/users", async (req, res) => {
+      const newUsers = req.body;
+      console.log(newUsers);
+      const query = { email: newUsers.email };
+      const userExist = await userCollection.findOne(query);
+      if (userExist) {
+        return res.send({ message: "user already exists" });
+      }
+
+      const result = await userCollection.insertOne(newUsers);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const cursor = userCollection.find({});
+      const result = await cursor.toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
