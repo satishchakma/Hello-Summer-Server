@@ -61,11 +61,11 @@ async function run() {
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
-      const user = await usersCollection.findOne(query);
+      const user = await userCollection.findOne(query);
       if (user?.role !== "admin") {
         return res
           .status(403)
-          .send({ error: true, message: "forbidden message" });
+          .send({ error: true, message: "access forbidden" });
       }
       next();
     };
@@ -142,6 +142,14 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
+
+    app.post("/classes", async (req, res) => {
+      const newclass = req.body;
+      console.log(newclass);
+
+      const result = await userCollection.insertOne(newclass);
       res.send(result);
     });
   } finally {
