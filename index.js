@@ -57,6 +57,7 @@ async function run() {
     );
 
     const userCollection = client.db("helloSummerDB").collection("users");
+    const classCollection = client.db("helloSummerDB").collection("classes");
 
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
@@ -97,6 +98,12 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    app.get("/classes", async (req, res) => {
+      const cursor = classCollection.find({});
+      const result = await cursor.toArray();
+      res.send(result);
+    });
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -131,6 +138,19 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     });
+
+    app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false });
+      }
+
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const result = { admin: user?.role === "instructor" };
+      res.send(result);
+    });
     app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -149,7 +169,7 @@ async function run() {
       const newclass = req.body;
       console.log(newclass);
 
-      const result = await userCollection.insertOne(newclass);
+      const result = await classCollection.insertOne(newclass);
       res.send(result);
     });
   } finally {
