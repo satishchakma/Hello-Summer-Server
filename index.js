@@ -172,6 +172,20 @@ async function run() {
       const result = await classCollection.insertOne(newclass);
       res.send(result);
     });
+
+    app.patch("/classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      // this option instructs the method to create a document if no documents match the filter
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
