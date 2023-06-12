@@ -104,6 +104,12 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+    app.get("/instructors", async (req, res) => {
+      const query = { role: "instructor" };
+      const cursor = userCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -183,7 +189,28 @@ async function run() {
           status: "approved",
         },
       };
-      const result = await userCollection.updateOne(filter, updateDoc, options);
+      const result = await classCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+    app.patch("/classes/deny/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      // this option instructs the method to create a document if no documents match the filter
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: "denied",
+        },
+      };
+      const result = await classCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
   } finally {
