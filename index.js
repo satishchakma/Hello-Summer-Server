@@ -247,6 +247,29 @@ async function run() {
         }
       }
     });
+
+    app.get("/selectedClass/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { student: { $in: [email] } };
+
+      const result = await selectedClassCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/selectedClass/:id/:email", async (req, res) => {
+      const courseId = req.params.id;
+      const studentEmail = req.params.email;
+
+      try {
+        const result = await selectedClassCollection.updateOne(
+          { _id: courseId },
+          { $pull: { student: studentEmail } }
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).json({ message: "Error deleting the class" });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
