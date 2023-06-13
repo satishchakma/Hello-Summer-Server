@@ -58,6 +58,9 @@ async function run() {
 
     const userCollection = client.db("helloSummerDB").collection("users");
     const classCollection = client.db("helloSummerDB").collection("classes");
+    const selectedClassCollection = client
+      .db("helloSummerDB")
+      .collection("selectedClass");
 
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
@@ -109,13 +112,6 @@ async function run() {
       const cursor = userCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
-    });
-    app.post("/jwt", (req, res) => {
-      const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h",
-      });
-      res.send(token);
     });
 
     app.get("/users/admin/:email", verifyJWT, async (req, res) => {
@@ -178,6 +174,15 @@ async function run() {
       const result = await classCollection.insertOne(newclass);
       res.send(result);
     });
+    app.get("/classes/:email", async (req, res) => {
+      console.log(req.params.email);
+      const userMail = req.params.email;
+      const query = {
+        instructorEmail: userMail,
+      };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
 
     app.patch("/classes/:id", async (req, res) => {
       const id = req.params.id;
@@ -212,6 +217,35 @@ async function run() {
         options
       );
       res.send(result);
+    });
+
+    app.post("/selectedClass", async (req, res) => {
+      const selectedClass = req.body;
+      const { _id, student } = req.body;
+
+      const findCourse = await selectedClassCollection.findOne({ _id });
+
+      if (!findCourse) {
+        const result = await selectedClassCollection.insertOne(selectedClass);
+        res.send(result);
+      } else {
+        const findUser = await selectedClassCollection.findOne({
+          _id,
+          student: { $in: student },
+        });
+
+        if (findUser) {
+          res
+            .status(400)
+            .json({ message: "User has already selected the class." });
+        } else {
+          const result = await selectedClassCollection.updateOne(
+            { _id },
+            { $push: { student: student[0] } }
+          );
+          res.send(result);
+        }
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
