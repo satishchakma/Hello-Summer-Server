@@ -270,6 +270,27 @@ async function run() {
         res.status(500).json({ message: "Error deleting the class" });
       }
     });
+
+    app.patch("/classes/feedback/:id", async (req, res) => {
+      const classId = req.params.id;
+      const feedback = req.body.feedback;
+
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(classId) };
+      // this option instructs the method to create a document if no documents match the filter
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          feedback: feedback,
+        },
+      };
+      const result = await classCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     //await client.close();
