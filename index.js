@@ -6,7 +6,14 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
 // middleswares
-app.use(cors());
+
+const corsOptions = {
+  origin: "*",
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const verifyJWT = (req, res, next) => {
